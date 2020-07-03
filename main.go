@@ -71,13 +71,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	urls := rxStrict.FindAllString(m.Content, -1)
 
 	if len(urls) > 0 {
-		if typingErr := s.ChannelTyping(m.ChannelID); typingErr != nil {
-			log.Errorln("Error setting typing status", typingErr)
-		}
+		isTyping := false
 
 		for _, url := range urls {
 			if !strings.Contains(url, "tiktok.com") {
 				continue
+			}
+
+			if !isTyping {
+				typingErr := s.ChannelTyping(m.ChannelID)
+				if typingErr != nil {
+					log.Errorln("Error setting typing status", typingErr)
+				}
+				isTyping = typingErr == nil
 			}
 
 			log.Infof("Found TikTok URL in %s from %s: %s", m.ChannelID, m.Author, url)
