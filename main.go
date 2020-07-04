@@ -117,7 +117,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 						IconURL: authorIconURL,
 					},
 					Fields: []*discordgo.MessageEmbedField{
-						{
+						/*{
 							Name:   "Comments",
 							Value:  textPrinter.Sprint(videoData.Props.PageProps.VideoData.ItemInfos.CommentCount),
 							Inline: true,
@@ -136,7 +136,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 							Name:   "Shares",
 							Value:  textPrinter.Sprint(videoData.Props.PageProps.VideoData.ItemInfos.ShareCount),
 							Inline: true,
-						},
+						},*/
 						{
 							Name:  "Link",
 							Value: url,
