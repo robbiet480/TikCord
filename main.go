@@ -94,6 +94,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				continue
 			}
 
+			if len(videoData.Props.PageProps.VideoData.ItemInfos.Video.Urls) == 0 {
+				log.Warnln("No video URL found in JSON, exiting!")
+				continue
+			}
+
 			videoFile, closer, videoFileErr := downloadVideo(videoData.Props.PageProps.VideoData.ItemInfos.ID, videoData.Props.PageProps.VideoData.ItemInfos.Video.Urls[0])
 			if videoFileErr != nil {
 				log.Errorln("Error downloading video", videoFileErr)
