@@ -21,7 +21,9 @@ import (
 
 var (
 	token          string
-	collyCollector = colly.NewCollector()
+	userAgent      = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:80.0) Gecko/20100101 Firefox/80.0"
+	httpClient     = &http.Client{}
+	collyCollector = colly.NewCollector(colly.AllowURLRevisit())
 	textPrinter    = message.NewPrinter(message.MatchLanguage("en"))
 	rxStrict       = xurls.Strict()
 )
@@ -37,10 +39,9 @@ func main() {
 		return
 	}
 
-	collyCollector.UserAgent = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:28.0) Gecko/20100101 Firefox/28.0"
+	collyCollector.UserAgent = userAgent
 	collyCollector.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-		r.Headers.Set("Accept-Encoding", "gzip, deflate")
+		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 		r.Headers.Set("Accept-Language", "en-US,en;q=0.9")
 	})
 
@@ -99,7 +100,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				continue
 			}
 
-			videoFile, closer, videoFileErr := downloadVideo(videoData.Props.PageProps.VideoData.ItemInfos.ID, videoData.Props.PageProps.VideoData.ItemInfos.Video.Urls[0])
+			videoFile, closer, videoFileErr := downloadVideo(url, videoData.Props.PageProps.VideoData.ItemInfos.ID, videoData.Props.PageProps.VideoData.ItemInfos.Video.Urls[0])
 			if videoFileErr != nil {
 				log.Errorln("Error downloading video", videoFileErr)
 				continue
@@ -171,10 +172,19 @@ func getVideoData(tikTokURL string) (*PageData, error) {
 	return &data, nil
 }
 
-func downloadVideo(videoID, videoURL string) (*discordgo.File, io.ReadCloser, error) {
-	resp, err := http.Get(videoURL)
-	if err != nil {
-		return nil, nil, err
+func downloadVideo(pageURL, videoID, videoURL string) (*discordgo.File, io.ReadCloser, error) {
+
+	req, reqErr := http.NewRequest("GET", videoURL, nil)
+	if reqErr != nil {
+		return nil, nil, reqErr
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	req.Header.Set("Referer", pageURL)
+	resp, resErr := httpClient.Do(req)
+	if resErr != nil {
+		return nil, nil, resErr
 	}
 
 	return &discordgo.File{
